@@ -1,4 +1,4 @@
-﻿#ifndef __POLY_ITEM_H__
+#ifndef __POLY_ITEM_H__
 #define __POLY_ITEM_H__
 
 // 多项式项类
