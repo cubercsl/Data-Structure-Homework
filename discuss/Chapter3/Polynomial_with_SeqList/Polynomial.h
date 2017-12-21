@@ -1,0 +1,238 @@
+#ifndef __POLYNOMIAL_H__
+#define __POLYNOMIAL_H__
+
+#include "Assistance.h" // 辅助软件包
+#include "PolyItem.h"   // 多项式项类
+#include "SeqList.h"    // 顺序表类
+
+// 多项式类
+class Polynomial
+{
+protected:
+    // 多项式实现的数据成员:
+    SeqList<PolyItem> polyList; // 多项式组成的线性表
+
+public:
+    //  抽象数据类型方法声明及重载编译系统默认方法声明:
+    Polynomial(){};                                              // 无参构造函数
+    ~Polynomial(){};                                             // 析构函数
+    int Length() const;                                          // 求多项式的项数
+    bool IsZero() const;                                         // 判断多项式是否为0
+    void SetZero();                                              // 将多项式置为0
+    void Display();                                              // 显示多项式
+    void InsItem(const PolyItem& item);                          // 插入一项
+    Polynomial operator+(const Polynomial& p) const;             // 加法运算符重载
+    Polynomial operator*(const double& p) const;                 // 数乘运算符重载
+    Polynomial operator-(const Polynomial& p) const;             // 减法运算符重载
+    Polynomial operator*(const Polynomial& p) const;             // 乘法运算符重载
+    Polynomial(const Polynomial& copy);                          // 复制构造函数
+    Polynomial(const SeqList<PolyItem>& copySeqList);            // 由多项式组成的线性表构造多项式
+    Polynomial(PolyItem v[], int n, int size = DEFAULT_SIZE);    // 由数组内容构造多项式
+    Polynomial& operator=(const Polynomial& copy);               // 赋值语句重载
+    Polynomial& operator=(const SeqList<PolyItem>& copySeqList); // 赋值语句重载
+};
+
+// 多项式类的实现部分
+
+int Polynomial::Length() const
+// 操作结果：返回多项式的项数
+{
+    return polyList.GetLength();
+}
+
+bool Polynomial::IsZero() const
+// 操作结果：如多项式为0，则返回true，否则返回false
+{
+    return polyList.IsEmpty();
+}
+
+void Polynomial::SetZero()
+// 操作结果：将多项式置为0
+{
+    polyList.Clear();
+}
+
+void Polynomial::Display()
+// 操作结果：显示多项式
+{
+    int pos = 1;
+    PolyItem it;
+    Status status = polyList.GetElem(pos, it);
+    if (IsZero())
+    {
+        cout << "0";
+        return;
+    }
+    while (status == ENTRY_FOUND)
+    { // 依次显示多项式的每一项
+        if (pos > 1 && it.coef > 0)
+            cout << "+";
+        if (it.coef != 1)
+            if (it.coef != -1)
+                cout << it.coef;
+            else
+                cout << "-";
+        if (it.expn > 1)
+            cout << "x^" << it.expn;
+        else if (it.expn == 1)
+            cout << "x";
+        status = polyList.GetElem(++pos, it); // 取出下一项
+    }
+}
+
+Polynomial Polynomial::operator+(const Polynomial& p) const
+// 操作结：返回当前多项式与p之和――加法运算符重载
+{
+    SeqList<PolyItem> la = polyList;   // 当前多项式对应的线性表
+    SeqList<PolyItem> lb = p.polyList; // 多项式p对应的线性表
+    SeqList<PolyItem> lc;              // 和多项式对应的线性表
+    int aPos = 1, bPos = 1;
+    PolyItem aItem, bItem;
+    Status aStatus, bStatus;
+
+    aStatus = la.GetElem(aPos++, aItem); // 取出la的第1项
+    bStatus = lb.GetElem(bPos++, bItem); // 取出lb的第1项
+
+    while (aStatus == ENTRY_FOUND && bStatus == ENTRY_FOUND)
+    {
+        if (aItem.expn > bItem.expn)
+        {                                        // la中的项aItem指数较小
+            lc.InsertElem(aItem);                // 将aItem追加到lc的表尾
+            aStatus = la.GetElem(aPos++, aItem); // 取出la的第下一项
+        }
+        else if (aItem.expn < bItem.expn)
+        {                                        // lb中的项bItem指数较小
+            lc.InsertElem(bItem);                // 将bItem追加到lc的表尾
+            bStatus = lb.GetElem(bPos++, bItem); // 取出lb的第下一项
+        }
+        else
+        { // la中的项aItem和lb中的项bItem指数相等
+            PolyItem sumItem(aItem.coef + bItem.coef, aItem.expn);
+            if (sumItem.coef != 0)
+                lc.InsertElem(sumItem);          // 将两项的和追加到lc的表尾
+            aStatus = la.GetElem(aPos++, aItem); // 取出la的第下一项
+            bStatus = lb.GetElem(bPos++, bItem); // 取出lb的第下一项
+        }
+    }
+
+    while (aStatus == ENTRY_FOUND)
+    {                                        // 将la的剩余项追加到lc的后面
+        lc.InsertElem(aItem);                // 将aItem追加到lc的后面
+        aStatus = la.GetElem(aPos++, aItem); // 取出la的第下一项
+    }
+
+    while (bStatus == ENTRY_FOUND)
+    {                                        // 将lb的剩余项追加到lc的后面
+        lc.InsertElem(bItem);                // 将bItem追加到lc的后面
+        bStatus = lb.GetElem(bPos++, bItem); // 取出lb的第下一项
+    }
+
+    Polynomial fc; // 和多项式
+    fc.polyList = lc;
+
+    return fc;
+}
+
+Polynomial Polynomial::operator*(const double& p) const
+// 操作结果：返回当前多项式乘以实数p后的多项式——乘法运算符的重载
+{
+    PolyItem aItem;
+    int aPos = 1;
+    Status aStatus;
+    SeqList<PolyItem> la = this->polyList;
+    SeqList<PolyItem> lb;
+    aStatus = la.GetElem(aPos++, aItem);
+
+    while (aStatus == ENTRY_FOUND)
+    {
+        aItem.coef *= p;
+        lb.InsertElem(aItem);
+        aStatus = la.GetElem(aPos++, aItem);
+    }
+    Polynomial fb;
+    fb.polyList = lb;
+    return fb;
+}
+
+Polynomial Polynomial::operator*(const Polynomial& p) const
+// 操作结果：返回当前多项式与多项式p的乘积——乘法运算符的重载
+{
+    Polynomial fa = *this;
+    Polynomial fb = p;
+    Polynomial fc;
+    fc.SetZero();
+    SeqList<PolyItem> la = this->polyList;
+    SeqList<PolyItem> lb = p.polyList;
+    SeqList<PolyItem> lc = fc.polyList;
+    Polynomial tempa;
+    int aPos = 1, bPos = 1;
+    PolyItem aItem, bItem;
+    Status aStatus, bStatus;
+    PolyItem temp;
+
+    aStatus = la.GetElem(aPos++, aItem);
+    bStatus = lb.GetElem(bPos++, bItem);
+    while (aStatus == ENTRY_FOUND)
+    {
+        bPos = 1;
+        bStatus = lb.GetElem(bPos++, bItem);
+        while (bStatus == ENTRY_FOUND)
+        {
+            temp = aItem;
+            temp.expn = aItem.expn + bItem.expn;
+            temp.coef = aItem.coef * bItem.coef;
+            lc.InsertElem(temp);
+            bStatus = lb.GetElem(bPos++, bItem);
+        }
+        tempa.polyList = lc;
+        lc.Clear();
+        fc = fc + tempa;
+        aStatus = la.GetElem(aPos++, aItem);
+    }
+
+    return fc;
+}
+
+Polynomial Polynomial::operator-(const Polynomial& p) const
+// 操作结果：返回当前多项式与多项式p的差——减法运算符的重载
+{
+    Polynomial fa = *this;
+    Polynomial fb = p * (-1);
+    return fa + fb;
+}
+
+Polynomial::Polynomial(const Polynomial& copy)
+// 操作结果：由多项式copy构造新多项式――复制构造函数
+{
+    polyList = copy.polyList;
+}
+
+Polynomial::Polynomial(const SeqList<PolyItem>& copySeqList)
+// 操作结果：由多项式组成的线性表构造多项式――转换构造函数
+{
+    polyList = copySeqList;
+}
+
+Polynomial::Polynomial(PolyItem v[], int n, int size)
+// 操作结果：由数组内容构造多项式——转换构造函数
+{
+    polyList = SeqList<PolyItem>(v, n, size);
+}
+
+Polynomial& Polynomial::operator=(const Polynomial& copy)
+// 操作结果：将多项式copy赋值给当前多项式――赋值语句重载
+{
+    if (&copy != this)
+        polyList = copy.polyList;
+    return *this;
+}
+
+Polynomial& Polynomial::operator=(const SeqList<PolyItem>& copySeqList)
+// 操作结果：将多项式组成的线性表copySeqList赋值给当前多项式
+//	――赋值语句重载
+{
+    polyList = copySeqList;
+    return *this;
+}
+
+#endif
