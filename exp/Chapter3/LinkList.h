@@ -19,6 +19,10 @@ public:
     bool IsEmpty() const;                                // 判断单链表是否为空
     void Clear();                                        // 将单链表清空
     void Traverse(void (*Visit)(const ElemType&)) const; // 遍历单链表
+    Status GetElem(int position, ElemType& e) const;     // 求指定位置的元素
+    Status SetElem(int position, const ElemType& e);     // 设置指定位置的元素值
+    Status DeleteElem(int position, ElemType& e);        // 删除元素
+    Status InsertElem(int position, const ElemType &e);	 // 在指定位置插入元素
     void Inverse();                                      // 原地逆置(3)
     Node<ElemType>* LocateElem(int i) const;             // 寻找第i个结点(4)
     int CountElem(const ElemType& e) const;              // 统计单链表中等于给定值e的个数(4)
@@ -90,6 +94,68 @@ void LinkList<ElemType>::Traverse(void (*Visit)(const ElemType&)) const
         (*Visit)(p->data);
         p = p->next;
     }
+}
+
+template <class ElemType>
+Status LinkList<ElemType>::GetElem(int i, ElemType& e) const
+{
+    if (i < 1 || i > length)
+        return RANGE_ERROR;
+    Node<ElemType>* p = head->next;
+    int count;
+    for (count = 1; count < i; count++)
+        p = p->next; // p指向第i个结点
+    e = p->data;     // 用e返回第i个元素的值
+    return ENTRY_FOUND;
+}
+
+template <class ElemType>
+Status LinkList<ElemType>::SetElem(int i, const ElemType& e)
+{
+    if (i < 1 || i > length)
+        return RANGE_ERROR;
+    else
+    {
+        Node<ElemType>* p = head->next;
+        int count;
+        for (count = 1; count < i; count++)
+            p = p->next; // 取出指向第i个结点的指针
+        p->data = e;     // 修改第i个元素的值为e
+        return SUCCESS;
+    }
+}
+
+template <class ElemType>
+Status LinkList<ElemType>::DeleteElem(int i, ElemType& e)
+{
+    if (i < 1 || i > length)
+        return RANGE_ERROR; // i范围错
+    Node<ElemType>*p = head, *q;
+    int count;
+    for (count = 1; count < i; count++)
+        p = p->next;   // p指向第i-1个结点
+    q = p->next;       // q指向第i个结点
+    p->next = q->next; // 删除结点
+    e = q->data;       // 用e返回被删结点元素值
+    length--;          // 删除成功后元素个数减1
+    delete q;          // 释放被删结点
+    return SUCCESS;
+}
+
+template <class ElemType>
+Status LinkList<ElemType>::InsertElem(int i, const ElemType& e)
+{
+    if (i < 1 || i > length + 1)
+        return RANGE_ERROR;
+    Node<ElemType>*p = head, *q;
+    int count;
+    for (count = 1; count < i; count++)
+        p = p->next;                    // p指向第i-1个结点
+    q = new Node<ElemType>(e, p->next); // 生成新结点q
+    assert(q != 0);                     // 申请结点失败，终止程序运行
+    p->next = q;                        // 将q插入到链表中
+    length++;                           // 插入成功后，单链表长度加1
+    return SUCCESS;
 }
 
 template <class ElemType>
