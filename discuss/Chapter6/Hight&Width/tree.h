@@ -42,15 +42,9 @@ int Tree::width()
         int count = 0;
         for (int i = 0; i < n; i++)
         {
-            int u = q.front();
+            int p = q.front();
             q.pop();
-            int p = ch[u][0]; // 儿子
-            while (~p)
-            {
-                ++count;
-                q.push(p);
-                p = ch[p][1]; // 兄弟
-            }
+            for (p = ch[p][0]; ~p; p = ch[p][1]) ++count, q.push(p);
         }
         ret = std::max(n = count, ret);
     }
@@ -63,8 +57,7 @@ int Tree::dfs(int u)
 {
     if (u == -1) return 0;
     int ret = 0;
-    for (u = ch[u][0]; ~u; u = ch[u][1])
-        ret = std::max(ret, dfs(u));
+    for (u = ch[u][0]; ~u; u = ch[u][1]) ret = std::max(ret, dfs(u));
     return ret + 1;
 }
 
